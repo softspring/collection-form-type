@@ -1,23 +1,10 @@
 {
-    "name": "softspring/component-template",
-    "description": "This is a template for creating new components",
+    "name": "softspring/collection-form-type",
+    "description": "Collection form type for Symfony",
     "type": "library",
     "license": "MIT",
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "require": {
-        "php": ">=8.1"
-    },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "3.51.*",
-        "phpstan/phpstan": "^1.10",
-        "rector/rector": "^1.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Softspring\\Component\\Template\\": "src"
-        }
-    },
     "config": {
         "sort-packages": true
     }

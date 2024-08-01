@@ -1,11 +1,10 @@
-# Template component
+# Collection form type
 
-[![Latest Stable Version](https://poser.pugx.org/softspring/component-template/v/stable.svg)](https://packagist.org/packages/softspring/component-template)
-[![Latest Unstable Version](https://poser.pugx.org/softspring/component-template/v/unstable.svg)](https://packagist.org/packages/softspring/component-template)
-[![License](https://poser.pugx.org/softspring/component-template/license.svg)](https://packagist.org/packages/softspring/component-template)
-[![PHP Version Require](http://poser.pugx.org/softspring/component-template/require/php)](https://packagist.org/packages/softspring/component-template)
-[![Total Downloads](https://poser.pugx.org/softspring/component-template/downloads)](https://packagist.org/packages/softspring/component-template)
-[![Build status](https://github.com/softspring/component-template/actions/workflows/php.yml/badge.svg?branch=5.3)](https://github.com/softspring/component-template/actions/workflows/php.yml)
+[![Latest Stable Version](https://poser.pugx.org/softspring/collection-form-type/v/stable.svg)](https://packagist.org/packages/softspring/collection-form-type)
+[![Latest Unstable Version](https://poser.pugx.org/softspring/collection-form-type/v/unstable.svg)](https://packagist.org/packages/softspring/collection-form-type)
+[![License](https://poser.pugx.org/softspring/collection-form-type/license.svg)](https://packagist.org/packages/softspring/collection-form-type)
+[![Total Downloads](https://poser.pugx.org/softspring/collection-form-type/downloads)](https://packagist.org/packages/softspring/collection-form-type)
+[![Build status](https://github.com/softspring/collection-form-type/actions/workflows/php.yml/badge.svg?branch=5.3)](https://github.com/softspring/collection-form-type/actions/workflows/php.yml)
 
 This is the description of the component.
 
