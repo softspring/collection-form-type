@@ -47,7 +47,7 @@ class CollectionEvent extends Event {
         if (this._collection) {
             return this._collection;
         } else if (!this.target) {
-            return null;
+            throw new Error('This event does not have a target, and collection is not set');
         } else if (this.target.dataset.collectionTarget !== undefined) {
             return document.getElementById(this.target.dataset.collectionTarget);
         } else if (this.target.dataset.collection === 'collection') {
@@ -56,7 +56,7 @@ class CollectionEvent extends Event {
             const collection = this.target.closest('[data-collection=collection]');
 
             if (!collection) {
-                throw 'Collection not found';
+                throw new Error('Collection not found');
             }
 
             return collection;
@@ -65,18 +65,18 @@ class CollectionEvent extends Event {
 
     position(position) {
         if (position !== undefined) {
-            this._position = position;
+            this._position = parseInt(position);
         }
 
         if (this._position !== undefined) {
             return this._position;
         } else if (this.target.dataset.collectionInsertPosition !== undefined) {
-            return this.target.dataset.collectionInsertPosition;
+            return parseInt(this.target.dataset.collectionInsertPosition);
         } else {
             let node = this.node();
 
             if (node && node.dataset.index !== undefined) {
-                return node.dataset.index;
+                return parseInt(node.dataset.index);
             }
 
             return null;
@@ -104,13 +104,16 @@ class CollectionEvent extends Event {
 
         if (this._prototypeName) {
             return this._prototypeName;
+        } else if (this.target.dataset.prototypeName !== undefined) {
+            return this.target.dataset.prototypeName;
         } else if (this.target.dataset.collectionPrototypeName !== undefined) {
             return this.target.dataset.collectionPrototypeName;
-        } else if (this.collection().dataset.prototypeName !== undefined) {
+        } else if (this.collection()?.dataset.prototypeName !== undefined) {
             return this.collection().dataset.prototypeName;
+        } else if (this.collection()?.dataset.collectionPrototypeName !== undefined) {
+            return this.collection().dataset.collectionPrototypeName;
         } else {
-            console.log('This target does not contains data-collection-prototype-name attribute, neither was set');
-            return null;
+            throw new Error('This target does not contains data-collection-prototype-name or data-prototype-name attribute, neither was set');
         }
     }
 
@@ -123,11 +126,14 @@ class CollectionEvent extends Event {
             return this._prototype;
         } else if (this.target.dataset.prototype !== undefined) {
             return this.target.dataset.prototype;
-        } else if (this.collection().dataset.prototype !== undefined) {
+        } else if (this.target.dataset.collectionPrototype !== undefined) {
+            return this.target.dataset.collectionPrototype;
+        } else if (this.collection()?.dataset.prototype !== undefined) {
             return this.collection().dataset.prototype;
+        } else if (this.collection()?.dataset.collectionPrototype !== undefined) {
+            return this.collection().dataset.collectionPrototype;
         } else {
-            console.log('This target does not contains data-collection-prototype attribute, neither was set');
-            return null;
+            throw new Error('This target does not contains data-collection-prototype or data-prototype attribute, neither was set');
         }
     }
 }
@@ -548,7 +554,8 @@ export {
     getCollectionLastIndex,
     modifyIndexes,
     replaceLastOccurence,
-    updateCollectionButtons
+    updateCollectionButtons,
+    CollectionEvent
 };
 
 // DEBUG EVENTS
