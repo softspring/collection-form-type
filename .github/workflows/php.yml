@@ -1,0 +1,26 @@
+name: CI
+
+on:
+    push:
+        branches: [ 5.3 ]
+    pull_request:
+        branches: [ 5.3 ]
+
+permissions:
+    contents: read
+
+env:
+    XDEBUG_MODE: coverage
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        #        permissions:
+        #            contents: write
+        strategy:
+            matrix:
+                php-versions: [ '8.1', '8.2' ] # do not test 8.0 because of phpstan errors with doctrine/collections
+                composer-prefer: [ '', '--prefer-lowest' ]
+
+        steps:
+            -   uses: actions/checkout@v3
