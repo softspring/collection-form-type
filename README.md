@@ -1,12 +1,10 @@
 # Collection form type
 
-[![Latest Stable Version](https://poser.pugx.org/softspring/collection-form-type/v/stable.svg)](https://packagist.org/packages/softspring/collection-form-type)
-[![Latest Unstable Version](https://poser.pugx.org/softspring/collection-form-type/v/unstable.svg)](https://packagist.org/packages/softspring/collection-form-type)
-[![License](https://poser.pugx.org/softspring/collection-form-type/license.svg)](https://packagist.org/packages/softspring/collection-form-type)
-[![Total Downloads](https://poser.pugx.org/softspring/collection-form-type/downloads)](https://packagist.org/packages/softspring/collection-form-type)
-[![Build status](https://github.com/softspring/collection-form-type/actions/workflows/php.yml/badge.svg?branch=5.3)](https://github.com/softspring/collection-form-type/actions/workflows/php.yml)
-
-This is the description of the component.
+![Latest Stable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=stable&style=flat-square)
+![Latest Unstable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=unstable&style=flat-square&include_prereleases)
+![License](https://img.shields.io/packagist/l/softspring/collection-form-type?style=flat-square)
+![Downloads](https://img.shields.io/packagist/dt/softspring/collection-form-type?style=flat-square)
+[![CI](https://img.shields.io/github/actions/workflow/status/softspring/collection-form-type/php.yml?branch=5.3&style=flat-square&label=CI)](https://github.com/softspring/collection-form-type/actions/workflows/php.yml)
 
 ## License
 
