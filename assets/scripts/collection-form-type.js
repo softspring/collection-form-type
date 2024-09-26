@@ -75,8 +75,8 @@ class CollectionEvent extends Event {
         } else {
             let node = this.node();
 
-            if (node && node.dataset.index !== undefined) {
-                return parseInt(node.dataset.index);
+            if (node && node.dataset.collectionIndex !== undefined) {
+                return parseInt(node.dataset.collectionIndex);
             }
 
             return null;
@@ -412,7 +412,7 @@ function insertAfterCollectionNode (collection, prototypeName, prototype, positi
     let newNode = document.createElement('div');
 
     // append node to form
-    const currentElementAtPosition = collection.querySelector(':scope > [data-collection=node][data-index="'+position+'"]');
+    const currentElementAtPosition = collection.querySelector(':scope > [data-collection=node][data-collection-index="'+position+'"]');
     if (currentElementAtPosition) {
         newNode = collection.insertBefore(newNode, currentElementAtPosition);
     } else {
@@ -426,7 +426,7 @@ function insertAfterCollectionNode (collection, prototypeName, prototype, positi
     newNode.outerHTML = prototype.replace(new RegExp(prototypeName, 'g'), position);
 
     // select the node again to update JS structure reference variables
-    return collection.querySelector([':scope > [data-index="'+position+'"]']);
+    return collection.querySelector([':scope > [data-collection-index="'+position+'"]']);
 }
 
 function addCollectionNode (collection, prototypeName, prototype) {
@@ -441,7 +441,7 @@ function addCollectionNode (collection, prototypeName, prototype) {
     newNode.outerHTML = prototype.replace(new RegExp(prototypeName, 'g'), index);
 
     // select the node again to update JS structure reference variables
-    return collection.querySelector([':scope > [data-index="'+index+'"]']);
+    return collection.querySelector([':scope > [data-collection-index="'+index+'"]']);
 }
 
 function deleteCollectionNode (collection, node) {
@@ -502,29 +502,29 @@ function getCollectionLastIndex(collection) {
         return -1;
     }
 
-    return parseInt(nodeList.item(nodeList.length - 1).dataset.index);
+    return parseInt(nodeList.item(nodeList.length - 1).dataset.collectionIndex);
 }
 
 // DUPLICATES softspring/cms-bundle assets form-collection.js
 function modifyIndexes(rowElement, increment) {
-    let oldIndex = parseInt(rowElement.dataset.index);
+    let oldIndex = parseInt(rowElement.dataset.collectionIndex);
     let newIndex = oldIndex + increment;
-    rowElement.dataset.index = newIndex;
-    rowElement.setAttribute('data-index', newIndex);
+    rowElement.dataset.collectionIndex = newIndex;
+    rowElement.setAttribute('data-collection-index', newIndex);
     rowElement.querySelectorAll('[data-collection=node-index]').forEach((nodeIndex) => nodeIndex.innerHTML = newIndex);
 
     let oldRowId = rowElement.getAttribute('id');
-    rowElement.setAttribute('id', replaceLastOccurence(rowElement.getAttribute('id'), '_'+oldIndex, '_'+newIndex));
+    rowElement.setAttribute('id', replaceLastOccurrence(rowElement.getAttribute('id'), '_'+oldIndex, '_'+newIndex));
     let newRowId = rowElement.getAttribute('id');
 
     let oldRowFullName = rowElement.getAttribute('data-full-name');
-    rowElement.setAttribute('data-full-name', replaceLastOccurence(rowElement.getAttribute('data-full-name'), '['+oldIndex+']', '['+newIndex+']'));
+    rowElement.setAttribute('data-full-name', replaceLastOccurrence(rowElement.getAttribute('data-full-name'), '['+oldIndex+']', '['+newIndex+']'));
     let newRowFullName = rowElement.getAttribute('data-full-name');
 
     rowElement.innerHTML = rowElement.innerHTML.replaceAll(oldRowId, newRowId).replaceAll(oldRowFullName, newRowFullName);
 }
 
-function replaceLastOccurence(text, search, replace) {
+function replaceLastOccurrence(text, search, replace) {
     if (!text) {
         return text;
     }
@@ -553,7 +553,7 @@ export {
     moveDownCollectionNode,
     getCollectionLastIndex,
     modifyIndexes,
-    replaceLastOccurence,
+    replaceLastOccurrence,
     updateCollectionButtons,
     CollectionEvent
 };
