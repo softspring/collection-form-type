@@ -1,6 +1,6 @@
 class CollectionEvent extends Event {
     constructor(type, originEvent) {
-        super(type, { bubbles: true, cancelable: true });
+        super(type, {bubbles: true, cancelable: true});
         this._originEvent = originEvent;
         this._collection = undefined;
         this._position = undefined;
@@ -138,286 +138,263 @@ class CollectionEvent extends Event {
     }
 }
 
-window.addEventListener('load', (event) => {
+(function () {
+    if (!window.__sfs_collection_form_type_registered) {
+        window.addEventListener('load', __init());
+    }
+    window.__sfs_collection_form_type_registered = true;
+})();
 
-    // IMPORTANT, STORE INPUT VALUES INTO HTML FOR MOVING NODES BEFORE MOVE TO PREVENT LOOSING VALUE !!
-    document.addEventListener("change", function (event) {
-        if (!event.target) return;
-
-        if (event.target.matches('[data-collection=node] input[type=radio]')) {
-            event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
-            return;
-        }
-
-        if (event.target.matches('[data-collection=node] input[type=checkbox]')) {
-            event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
-            return;
-        }
-
-        if (event.target.matches('[data-collection=node] select')) {
-            [...event.target.options].forEach((option) => option.removeAttribute('selected'));
-            event.target.options[event.target.selectedIndex].setAttribute('selected', 'selected');
-            return;
-        }
-
-        if (event.target.matches('[data-collection=node] input')) {
-            event.target.setAttribute('value', event.target.value);
-        }
-    });
+function __init() {
+    document.addEventListener("change", onCollectionNodeChangePropagateValue);
 
     /* ************************************************************************************************************* *
      * CUSTOM COLLECTION ACTION EVENTS
      * ************************************************************************************************************* */
-    document.addEventListener("click", function (event) {
-        let collectionActionTarget = event.target;
-        if (!event.target) return;
-
-        if (!event.target.hasAttribute('data-collection-action')) {
-            // check if parent class is an action
-            collectionActionTarget = event.target.closest('[data-collection-action]')
-            if (!collectionActionTarget) return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'add') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.add', event));
-            return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'insert') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.insert', event));
-            return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'delete') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.delete', event));
-            return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'up') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.up', event));
-            return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'down') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.down', event));
-            return;
-        }
-
-        if (collectionActionTarget.dataset.collectionAction === 'duplicate') {
-            collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.duplicate', event));
-            return;
-        }
-
-        console.error('Invalid collection action: '+collectionActionTarget.dataset.collectionAction+'. Valid options are: add, insert, delete, up, down, duplicate');
-    });
-
-    /**
-     * Default collection.node.add event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.add", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.add.before', event);
-        beforeEvent.node(null); // init node, do not search in dom because it's not yet created
-        event.target.dispatchEvent(beforeEvent);
-
-        // do add collection node with beforeEvent returned data
-        const newNode = addCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype());
-
-        const afterEvent = CollectionEvent.create('collection.node.add.after', beforeEvent);
-        afterEvent.node(newNode);
-        beforeEvent.collection().dispatchEvent(afterEvent);
-    });
-
-    /**
-     * Default collection.node.insert event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.insert", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.insert.before', event);
-        event.target.dispatchEvent(beforeEvent);
-
-        // do insert collection node with beforeEvent returned data
-        const newNode = insertAfterCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype(), beforeEvent.position());
-
-        if (newNode.nextElementSibling) {
-            const nodes = [...beforeEvent.collection().querySelectorAll(':scope > [data-collection=node]')];
-            for (let n = nodes.indexOf(newNode)+1 ; n < nodes.length ; n++) {
-                modifyIndexes(nodes[n], +1);
-            }
-        }
-
-        const afterEvent = CollectionEvent.create('collection.node.insert.after', beforeEvent);
-        afterEvent.node(newNode);
-        beforeEvent.collection().dispatchEvent(afterEvent);
-    });
-
-    /**
-     * Default collection.node.delete event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.delete", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.delete.before', event);
-        event.target.dispatchEvent(beforeEvent);
-        beforeEvent.collection(beforeEvent.collection()); // store reference before deleting
-
-        // do delete collection node with beforeEvent returned data
-        deleteCollectionNode(beforeEvent.collection(), beforeEvent.node());
-
-        const afterEvent = CollectionEvent.create('collection.node.delete.after', beforeEvent);
-        afterEvent.collection().dispatchEvent(afterEvent);
-    });
-
-    /**
-     * Default collection.node.up event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.up", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.up.before', event);
-        event.target.dispatchEvent(beforeEvent);
-        beforeEvent.collection(beforeEvent.collection()); // store reference before moving
-        beforeEvent.node(beforeEvent.node()); // store reference before moving
-
-        // do up collection node with beforeEvent returned data
-        moveUpCollectionNode(beforeEvent.collection(), beforeEvent.node());
-
-        const afterEvent = CollectionEvent.create('collection.node.up.after', beforeEvent);
-        beforeEvent.collection().dispatchEvent(afterEvent);
-    });
-
-    /**
-     * Default collection.node.down event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.down", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.down.before', event);
-        event.target.dispatchEvent(beforeEvent);
-        beforeEvent.collection(beforeEvent.collection()); // store reference before moving
-        beforeEvent.node(beforeEvent.node()); // store reference before moving
-
-        // do up collection node with beforeEvent returned data
-        moveDownCollectionNode(beforeEvent.collection(), beforeEvent.node());
-
-        const afterEvent = CollectionEvent.create('collection.node.down.after', beforeEvent);
-        beforeEvent.collection().dispatchEvent(afterEvent);
-    });
-
-    /**
-     * Default collection.node.duplicate event listener
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.duplicate", function (event) {
-        event.preventDefault();
-
-        let beforeEvent = CollectionEvent.create('collection.node.duplicate.before', event);
-        event.target.dispatchEvent(beforeEvent);
-        beforeEvent.collection(beforeEvent.collection()); // store reference before moving
-        beforeEvent.node(beforeEvent.node()); // store reference before moving
-
-        // do up collection node with beforeEvent returned data
-        let newNode = duplicateCollectionNode(beforeEvent.collection(), beforeEvent.node());
-
-        if (newNode.nextElementSibling) {
-            const nodes = [...beforeEvent.collection().querySelectorAll(':scope > [data-collection=node]')];
-            for (let n = nodes.indexOf(newNode)+1 ; n < nodes.length ; n++) {
-                modifyIndexes(nodes[n], +1);
-            }
-        }
-
-        const afterEvent = CollectionEvent.create('collection.node.duplicate.after', beforeEvent);
-        afterEvent.node(newNode);
-        beforeEvent.collection().dispatchEvent(afterEvent);
-    });
-
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.add.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.insert.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.delete.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.up.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.down.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.duplicate.after", function (event) {
-        updateCollectionButtons(event.collection());
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.add.after", function (event) {
-        event.node().scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.insert.after", function (event) {
-        event.node().scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    });
-
-    /**
-     * @param {CollectionEvent} event
-     */
-    document.addEventListener("collection.node.duplicate.after", function (event) {
-        event.node().scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    });
-
-
-    // on load, prepare buttons
+    document.addEventListener("click", onCollectionActionClick);
+    document.addEventListener("collection.node.add", onCollectionNodeAdd);
+    document.addEventListener("collection.node.insert", onCollectionNodeInsert);
+    document.addEventListener("collection.node.delete", onCollectionNodeDelete);
+    document.addEventListener("collection.node.up", onCollectionNodeUp);
+    document.addEventListener("collection.node.down", onCollectionNodeDown);
+    document.addEventListener("collection.node.duplicate", onCollectionNodeDuplicate);
+    document.addEventListener("collection.node.add.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.insert.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.delete.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.up.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.down.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.duplicate.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.add.after", onCollectionNodeEventAfterScrollIntoView);
+    document.addEventListener("collection.node.insert.after", onCollectionNodeEventAfterScrollIntoView);
+    document.addEventListener("collection.node.duplicate.after", onCollectionNodeEventAfterScrollIntoView);
     document.querySelectorAll('[data-collection=collection]').forEach((collection) => updateCollectionButtons(collection));
-});
+};
 
-function insertAfterCollectionNode (collection, prototypeName, prototype, position) {
+
+/**
+ * IMPORTANT, STORE INPUT VALUES INTO HTML FOR MOVING NODES BEFORE MOVE TO PREVENT LOOSING VALUE !!
+ */
+function onCollectionNodeChangePropagateValue(event) {
+    if (!event.target || !event.target.matches('[data-collection=node]')) {
+        return;
+    }
+
+    if (event.target.matches('[data-collection=node] input[type=radio]')) {
+        event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
+        return;
+    }
+
+    if (event.target.matches('[data-collection=node] input[type=checkbox]')) {
+        event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
+        return;
+    }
+
+    if (event.target.matches('[data-collection=node] select')) {
+        [...event.target.options].forEach((option) => option.removeAttribute('selected'));
+        event.target.options[event.target.selectedIndex].setAttribute('selected', 'selected');
+        return;
+    }
+
+    if (event.target.matches('[data-collection=node] input')) {
+        event.target.setAttribute('value', event.target.value);
+    }
+}
+
+function onCollectionActionClick(event) {
+    let collectionActionTarget = event.target;
+    if (!event.target) return;
+
+    if (!event.target.hasAttribute('data-collection-action')) {
+        // check if parent class is an action
+        collectionActionTarget = event.target.closest('[data-collection-action]')
+        if (!collectionActionTarget) return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'add') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.add', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'insert') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.insert', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'delete') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.delete', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'up') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.up', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'down') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.down', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'duplicate') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.duplicate', event));
+        return;
+    }
+
+    console.error('Invalid collection action: ' + collectionActionTarget.dataset.collectionAction + '. Valid options are: add, insert, delete, up, down, duplicate');
+}
+
+/**
+ * Default collection.node.add event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeAdd(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.add.before', event);
+    beforeEvent.node(null); // init node, do not search in dom because it's not yet created
+    event.target.dispatchEvent(beforeEvent);
+
+    // do add collection node with beforeEvent returned data
+    const newNode = addCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype());
+
+    const afterEvent = CollectionEvent.create('collection.node.add.after', beforeEvent);
+    afterEvent.node(newNode);
+    beforeEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * Default collection.node.insert event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeInsert(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.insert.before', event);
+    event.target.dispatchEvent(beforeEvent);
+
+    // do insert collection node with beforeEvent returned data
+    const newNode = insertAfterCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype(), beforeEvent.position());
+
+    if (newNode.nextElementSibling) {
+        const nodes = [...beforeEvent.collection().querySelectorAll(':scope > [data-collection=node]')];
+        for (let n = nodes.indexOf(newNode) + 1; n < nodes.length; n++) {
+            modifyIndexes(nodes[n], +1);
+        }
+    }
+
+    const afterEvent = CollectionEvent.create('collection.node.insert.after', beforeEvent);
+    afterEvent.node(newNode);
+    beforeEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * Default collection.node.delete event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeDelete(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.delete.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    beforeEvent.collection(beforeEvent.collection()); // store reference before deleting
+
+    // do delete collection node with beforeEvent returned data
+    deleteCollectionNode(beforeEvent.collection(), beforeEvent.node());
+
+    const afterEvent = CollectionEvent.create('collection.node.delete.after', beforeEvent);
+    afterEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * Default collection.node.up event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeUp(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.up.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    beforeEvent.collection(beforeEvent.collection()); // store reference before moving
+    beforeEvent.node(beforeEvent.node()); // store reference before moving
+
+    // do up collection node with beforeEvent returned data
+    moveUpCollectionNode(beforeEvent.collection(), beforeEvent.node());
+
+    const afterEvent = CollectionEvent.create('collection.node.up.after', beforeEvent);
+    beforeEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * Default collection.node.down event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeDown(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.down.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    beforeEvent.collection(beforeEvent.collection()); // store reference before moving
+    beforeEvent.node(beforeEvent.node()); // store reference before moving
+
+    // do up collection node with beforeEvent returned data
+    moveDownCollectionNode(beforeEvent.collection(), beforeEvent.node());
+
+    const afterEvent = CollectionEvent.create('collection.node.down.after', beforeEvent);
+    beforeEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * Default collection.node.duplicate event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeDuplicate(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.duplicate.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    beforeEvent.collection(beforeEvent.collection()); // store reference before moving
+    beforeEvent.node(beforeEvent.node()); // store reference before moving
+
+    // do up collection node with beforeEvent returned data
+    let newNode = duplicateCollectionNode(beforeEvent.collection(), beforeEvent.node());
+
+    if (newNode.nextElementSibling) {
+        const nodes = [...beforeEvent.collection().querySelectorAll(':scope > [data-collection=node]')];
+        for (let n = nodes.indexOf(newNode) + 1; n < nodes.length; n++) {
+            modifyIndexes(nodes[n], +1);
+        }
+    }
+
+    const afterEvent = CollectionEvent.create('collection.node.duplicate.after', beforeEvent);
+    afterEvent.node(newNode);
+    beforeEvent.collection().dispatchEvent(afterEvent);
+}
+
+/**
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeEventAfterUpdateCollectionButtons(event) {
+    updateCollectionButtons(event.collection());
+}
+
+/**
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeEventAfterScrollIntoView(event) {
+    event.node().scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
+}
+
+function insertAfterCollectionNode(collection, prototypeName, prototype, position) {
     // create and process prototype
     let newNode = document.createElement('div');
 
     // append node to form
-    const currentElementAtPosition = collection.querySelector(':scope > [data-collection=node][data-collection-index="'+position+'"]');
+    const currentElementAtPosition = collection.querySelector(':scope > [data-collection=node][data-collection-index="' + position + '"]');
     if (currentElementAtPosition) {
         newNode = collection.insertBefore(newNode, currentElementAtPosition);
     } else {
         if (collection.children.length > 0) {
-            newNode = collection.insertBefore(newNode, collection.children[collection.children.length-1]);
+            newNode = collection.insertBefore(newNode, collection.children[collection.children.length - 1]);
         } else {
             newNode = collection.appendChild(newNode);
         }
@@ -426,12 +403,12 @@ function insertAfterCollectionNode (collection, prototypeName, prototype, positi
     newNode.outerHTML = prototype.replace(new RegExp(prototypeName, 'g'), position);
 
     // select the node again to update JS structure reference variables
-    return collection.querySelector([':scope > [data-collection-index="'+position+'"]']);
+    return collection.querySelector([':scope > [data-collection-index="' + position + '"]']);
 }
 
-function addCollectionNode (collection, prototypeName, prototype) {
+function addCollectionNode(collection, prototypeName, prototype) {
     const lastIndex = getCollectionLastIndex(collection);
-    const index = isNaN(lastIndex) ? 0 : lastIndex+1;
+    const index = isNaN(lastIndex) ? 0 : lastIndex + 1;
 
     // create and process prototype
     let newNode = document.createElement('div');
@@ -441,13 +418,13 @@ function addCollectionNode (collection, prototypeName, prototype) {
     newNode.outerHTML = prototype.replace(new RegExp(prototypeName, 'g'), index);
 
     // select the node again to update JS structure reference variables
-    return collection.querySelector([':scope > [data-collection-index="'+index+'"]']);
+    return collection.querySelector([':scope > [data-collection-index="' + index + '"]']);
 }
 
-function deleteCollectionNode (collection, node) {
+function deleteCollectionNode(collection, node) {
     let nodeIterator = node;
     while (nodeIterator = nodeIterator.nextElementSibling) {
-        if ( nodeIterator.matches('[data-collection=node]') ) {
+        if (nodeIterator.matches('[data-collection=node]')) {
             modifyIndexes(nodeIterator, -1);
         }
     }
@@ -459,8 +436,8 @@ function moveUpCollectionNode(collection, node) {
     const nodes = [...collection.querySelectorAll(':scope > [data-collection=node]')];
     const currentNodeIndex = nodes.indexOf(node);
 
-    if (nodes[currentNodeIndex-1] !== undefined) {
-        const prevNode = nodes[currentNodeIndex-1];
+    if (nodes[currentNodeIndex - 1] !== undefined) {
+        const prevNode = nodes[currentNodeIndex - 1];
         prevNode.parentNode.insertBefore(node, prevNode);
         modifyIndexes(node, -1);
         modifyIndexes(prevNode, +1);
@@ -471,8 +448,8 @@ function moveDownCollectionNode(collection, node) {
     const nodes = [...collection.querySelectorAll(':scope > [data-collection=node]')];
     const currentNodeIndex = nodes.indexOf(node);
 
-    if (nodes[currentNodeIndex+1] !== undefined) {
-        const nextNode = nodes[currentNodeIndex+1];
+    if (nodes[currentNodeIndex + 1] !== undefined) {
+        const nextNode = nodes[currentNodeIndex + 1];
         node.parentNode.insertBefore(nextNode, node);
         modifyIndexes(node, +1);
         modifyIndexes(nextNode, -1);
@@ -514,11 +491,11 @@ function modifyIndexes(rowElement, increment) {
     rowElement.querySelectorAll('[data-collection=node-index]').forEach((nodeIndex) => nodeIndex.innerHTML = newIndex);
 
     let oldRowId = rowElement.getAttribute('id');
-    rowElement.setAttribute('id', replaceLastOccurrence(rowElement.getAttribute('id'), '_'+oldIndex, '_'+newIndex));
+    rowElement.setAttribute('id', replaceLastOccurrence(rowElement.getAttribute('id'), '_' + oldIndex, '_' + newIndex));
     let newRowId = rowElement.getAttribute('id');
 
     let oldRowFullName = rowElement.getAttribute('data-full-name');
-    rowElement.setAttribute('data-full-name', replaceLastOccurrence(rowElement.getAttribute('data-full-name'), '['+oldIndex+']', '['+newIndex+']'));
+    rowElement.setAttribute('data-full-name', replaceLastOccurrence(rowElement.getAttribute('data-full-name'), '[' + oldIndex + ']', '[' + newIndex + ']'));
     let newRowFullName = rowElement.getAttribute('data-full-name');
 
     rowElement.innerHTML = rowElement.innerHTML.replaceAll(oldRowId, newRowId).replaceAll(oldRowFullName, newRowFullName);
@@ -537,12 +514,12 @@ function updateCollectionButtons(collection) {
     const innerCollectionUpButtons = [...collection.querySelectorAll(':scope > [data-collection=node] [data-collection=node] [data-collection-action=up]')];
     const collectionUpButtons = [...collection.querySelectorAll(':scope > [data-collection=node] [data-collection-action=up]')].filter((button) => !innerCollectionUpButtons.includes(button));
     collectionUpButtons.forEach((button) => button.classList.remove('d-none'));
-    collectionUpButtons.length>0 && collectionUpButtons[0].classList.add('d-none');
+    collectionUpButtons.length > 0 && collectionUpButtons[0].classList.add('d-none');
 
     const innerCollectionDownButtons = [...collection.querySelectorAll(':scope > [data-collection=node] [data-collection=node] [data-collection-action=down]')];
     const collectionDownButtons = [...collection.querySelectorAll(':scope > [data-collection=node] [data-collection-action=down]')].filter((button) => !innerCollectionDownButtons.includes(button));
     collectionDownButtons.forEach((button) => button.classList.remove('d-none'));
-    collectionDownButtons.length>0 && collectionDownButtons[collectionDownButtons.length-1].classList.add('d-none');
+    collectionDownButtons.length > 0 && collectionDownButtons[collectionDownButtons.length - 1].classList.add('d-none');
 }
 
 export {
