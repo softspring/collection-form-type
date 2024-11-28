@@ -90,10 +90,10 @@ class CollectionEvent extends Event {
 
         if (this._node !== undefined) {
             return this._node;
-        } else if (event.target.dataset.collectionNode !== undefined) {
-            return document.getElementById(event.target.dataset.collectionNode);
+        } else if (this.target.dataset.collectionNode !== undefined) {
+            return document.getElementById(this.target.dataset.collectionNode);
         } else {
-            return event.target.closest('[data-collection=node]');
+            return this.target.closest('[data-collection=node]');
         }
     }
 
@@ -140,7 +140,7 @@ class CollectionEvent extends Event {
 
 (function () {
     if (!window.__sfs_collection_form_type_registered) {
-        window.addEventListener('load', __init());
+        window.addEventListener('load', __init);
     }
     window.__sfs_collection_form_type_registered = true;
 })();
@@ -168,14 +168,13 @@ function __init() {
     document.addEventListener("collection.node.insert.after", onCollectionNodeEventAfterScrollIntoView);
     document.addEventListener("collection.node.duplicate.after", onCollectionNodeEventAfterScrollIntoView);
     document.querySelectorAll('[data-collection=collection]').forEach((collection) => updateCollectionButtons(collection));
-};
-
+}
 
 /**
  * IMPORTANT, STORE INPUT VALUES INTO HTML FOR MOVING NODES BEFORE MOVE TO PREVENT LOOSING VALUE !!
  */
 function onCollectionNodeChangePropagateValue(event) {
-    if (!event.target || !event.target.matches('[data-collection=node]')) {
+    if (!event.target || !event.target.closest('[data-collection=node]')) {
         return;
     }
 
@@ -423,10 +422,11 @@ function addCollectionNode(collection, prototypeName, prototype) {
 
 function deleteCollectionNode(collection, node) {
     let nodeIterator = node;
-    while (nodeIterator = nodeIterator.nextElementSibling) {
+    while (nodeIterator) {
         if (nodeIterator.matches('[data-collection=node]')) {
             modifyIndexes(nodeIterator, -1);
         }
+        nodeIterator = nodeIterator.nextElementSibling; // loop until next node is null
     }
 
     node.remove();
