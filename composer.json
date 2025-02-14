@@ -2,7 +2,7 @@
     "name": "softspring/collection-form-type",
     "description": "Collection form type for Symfony",
     "type": "library",
-    "license": "MIT",
+    "license": "AGPL-3.0",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
