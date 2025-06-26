@@ -138,6 +138,53 @@ class CollectionEvent extends Event {
     }
 }
 
+class ClipboardEvent extends Event {
+    constructor(type, data) {
+        super(type, {bubbles: true, cancelable: true});
+        this._data = data;
+    }
+
+    data(data) {
+        if (data !== undefined) {
+            this._data = data;
+        }
+
+        if (this._data) {
+            return this._data;
+        } else {
+            throw new Error('ClipboardEvent data is not set');
+        }
+    }
+
+    toString() {
+        if (!this._data) {
+            throw new Error('ClipboardEvent data is not set');
+        }
+
+        if (typeof this._data === 'string') {
+            return this._data;
+        }
+
+        return JSON.stringify(this._data);
+    }
+
+    toArray() {
+        if (!this._data) {
+            throw new Error('ClipboardEvent data is not set');
+        }
+
+        if (typeof this._data === 'string') {
+            try {
+                return JSON.parse(this._data);
+            } catch (e) {
+                throw new Error('ClipboardEvent data is not valid JSON: ' + e.message);
+            }
+        }
+
+        return this._data;
+    }
+}
+
 (function () {
     if (!window.__sfs_collection_form_type_registered) {
         window.addEventListener('load', __init);
@@ -158,15 +205,19 @@ function __init() {
     document.addEventListener("collection.node.up", onCollectionNodeUp);
     document.addEventListener("collection.node.down", onCollectionNodeDown);
     document.addEventListener("collection.node.duplicate", onCollectionNodeDuplicate);
+    document.addEventListener("collection.node.copy", onCollectionNodeCopy);
+    document.addEventListener("collection.node.paste", onCollectionNodePaste);
     document.addEventListener("collection.node.add.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.insert.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.delete.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.up.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.down.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.duplicate.after", onCollectionNodeEventAfterUpdateCollectionButtons);
+    document.addEventListener("collection.node.paste.after", onCollectionNodeEventAfterUpdateCollectionButtons);
     document.addEventListener("collection.node.add.after", onCollectionNodeEventAfterScrollIntoView);
     document.addEventListener("collection.node.insert.after", onCollectionNodeEventAfterScrollIntoView);
     document.addEventListener("collection.node.duplicate.after", onCollectionNodeEventAfterScrollIntoView);
+    document.addEventListener("collection.node.paste.after", onCollectionNodeEventAfterScrollIntoView);
     document.querySelectorAll('[data-collection=collection]').forEach((collection) => updateCollectionButtons(collection));
 }
 
@@ -239,7 +290,17 @@ function onCollectionActionClick(event) {
         return;
     }
 
-    console.error('Invalid collection action: ' + collectionActionTarget.dataset.collectionAction + '. Valid options are: add, insert, delete, up, down, duplicate');
+    if (collectionActionTarget.dataset.collectionAction === 'copy') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.copy', event));
+        return;
+    }
+
+    if (collectionActionTarget.dataset.collectionAction === 'paste') {
+        collectionActionTarget.dispatchEvent(new CollectionEvent('collection.node.paste', event));
+        return;
+    }
+
+    console.error('Invalid collection action: ' + collectionActionTarget.dataset.collectionAction + '. Valid options are: add, insert, delete, up, down, duplicate, copy, paste');
 }
 
 /**
@@ -370,6 +431,115 @@ function onCollectionNodeDuplicate(event) {
 }
 
 /**
+ * Default collection.node.copy event listener
+ * @param {CollectionEvent} event
+ */
+function onCollectionNodeCopy(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.copy.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    // beforeEvent.collection(beforeEvent.collection()); // store reference before moving
+    // beforeEvent.node(beforeEvent.node()); // store reference before moving
+
+    let collection = event.collection();
+    // let fullName = collection.dataset.fullName || collection.dataset.collectionFullName;
+    // let collectionId = collection.id;
+    // let prototypeName = collection.dataset.prototypeName || collection.dataset.collectionPrototypeName;
+
+    // do up collection node with beforeEvent returned data
+    // copy beforeEvent.node() outerHtml to clipboard with special identifification prefix
+    const copyNode = beforeEvent.node().cloneNode(true);
+    copyNode.dataset.collectionIndex = '___INDEX___'; // replace index with placeholder
+    const copyNodeId = copyNode.getAttribute('id');
+    const copyNodeFullName = copyNode.dataset.fullName;
+    const copyNodeCollectionIndex = copyNode.dataset.collectionIndex;
+
+    let copyText = copyNode.outerHTML;
+    copyText = copyText.replaceAll('data-collection-index="' + copyNodeCollectionIndex + '"', 'data-collection-index="___COPY___"');
+    copyText = copyText.replaceAll(copyNodeId, '___COPY_ID___');
+    copyText = copyText.replaceAll(copyNodeFullName, '___COPY_FULLNAME___');
+
+    const clipboardEvent = new ClipboardEvent('collection.node.copy.prepare', {
+        'source': 'softspring/collection-form-type',
+        'type': 'text/html',
+        'content': copyText,
+    });
+    event.target.dispatchEvent(clipboardEvent);
+
+    // write to clipboard
+    navigator.clipboard.writeText(clipboardEvent.toString()).then(() => {
+        const afterEvent = CollectionEvent.create('collection.node.copy.after', beforeEvent);
+        // same node as beforeEvent.node(), do not change it
+        beforeEvent.collection().dispatchEvent(afterEvent);
+    }).catch((err) => {
+        console.error('Failed to copy collection node to clipboard: ', err);
+    });
+}
+
+/**
+ * Default collection.node.paste event listener
+ * @param {CollectionEvent} event
+ */
+async function onCollectionNodePaste(event) {
+    event.preventDefault();
+
+    let beforeEvent = CollectionEvent.create('collection.node.paste.before', event);
+    event.target.dispatchEvent(beforeEvent);
+    beforeEvent.collection(beforeEvent.collection()); // store reference before moving
+
+    // read from clipboard
+    await navigator.clipboard
+        .readText()
+        .then((clipText) => {
+            const clipboardEvent = new ClipboardEvent('collection.node.paste.validate', clipText);
+            beforeEvent.target.dispatchEvent(clipboardEvent);
+
+            if (!clipboardEvent.toArray()) {
+                throw new Error('ClipboardEvent data is not valid JSON');
+            }
+
+            let collection = beforeEvent.collection();
+            let fullName = collection.dataset.fullName || collection.dataset.collectionFullName;
+            let collectionId = collection.id;
+            // let prototypeName = collection.dataset.prototypeName || collection.dataset.collectionPrototypeName;
+
+            const data = clipboardEvent.toArray();
+            let pastedText = data.content;
+            pastedText = pastedText.replaceAll('___COPY_ID___', collectionId+ '____COPY___');
+            pastedText = pastedText.replaceAll('___COPY_FULLNAME___', fullName+ '[___COPY___]');
+
+            beforeEvent.prototype(pastedText);
+            beforeEvent.prototypeName('___COPY___'); // set prototypeName to a special value to identify it later
+
+            let newNode = null;
+            if (!beforeEvent.position() && !beforeEvent.node()) {
+                newNode = addCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype());
+            } else {
+                // do add collection node with beforeEvent returned data
+                newNode = insertAfterCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype(), beforeEvent.position());
+            }
+
+            modifyIndexes(newNode, 0);
+
+            if (newNode.nextElementSibling) {
+                const nodes = [...beforeEvent.collection().querySelectorAll(':scope > [data-collection=node]')];
+                for (let n = nodes.indexOf(newNode) + 1; n < nodes.length; n++) {
+                    modifyIndexes(nodes[n], +1);
+                }
+            }
+
+            const afterEvent = CollectionEvent.create('collection.node.paste.after', beforeEvent);
+            afterEvent.node(newNode);
+            beforeEvent.collection().dispatchEvent(afterEvent);
+        })
+        .catch((err) => {
+            console.error('Failed to read clipboard contents: ', err);
+        })
+    ;
+}
+
+/**
  * @param {CollectionEvent} event
  */
 function onCollectionNodeEventAfterUpdateCollectionButtons(event) {
@@ -380,7 +550,7 @@ function onCollectionNodeEventAfterUpdateCollectionButtons(event) {
  * @param {CollectionEvent} event
  */
 function onCollectionNodeEventAfterScrollIntoView(event) {
-    event.node().scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
+    event.node()?.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
 }
 
 function insertAfterCollectionNode(collection, prototypeName, prototype, position) {
@@ -522,6 +692,19 @@ function updateCollectionButtons(collection) {
     collectionDownButtons.length > 0 && collectionDownButtons[collectionDownButtons.length - 1].classList.add('d-none');
 }
 
+function canPasteToCollection(collection) {
+    return navigator.clipboard
+        .readText()
+        .then((clipText) => {
+            const clipboardEvent = new ClipboardEvent('collection.node.copy.validate', clipText);
+            collection.dispatchEvent(clipboardEvent);
+            return !!clipboardEvent.toArray();
+        }).catch(() => {
+            return false;
+        })
+    ;
+}
+
 export {
     insertAfterCollectionNode,
     addCollectionNode,
@@ -532,39 +715,51 @@ export {
     modifyIndexes,
     replaceLastOccurrence,
     updateCollectionButtons,
-    CollectionEvent
+    canPasteToCollection,
+    CollectionEvent,
+    ClipboardEvent
 };
 
 // DEBUG EVENTS
-// window.addEventListener('load', (event) => {
-//     function dumpEvent(event) {
-//         console.log('*************************************** '+event.type+' ***************************************');
-//         console.log(event);
-//         // try { console.log('originEvent: '+ event.originEvent()); } catch {}
-//         try { console.log(event.collection()); } catch {}
-//         try { console.log('position: '+ event.position()); } catch {}
-//         try { console.log(event.node()); } catch {}
-//         // try { console.log('prototypeName: '+ event.prototypeName()); } catch {}
-//         // try { console.log('prototype: '+ event.prototype()); } catch {}
-//     }
-//
-//     // document.addEventListener('collection.node.add', dumpEvent);
-//     document.addEventListener('collection.node.add.before', dumpEvent);
-//     document.addEventListener('collection.node.add.after', dumpEvent);
-//
-//     // document.addEventListener('collection.node.insert', dumpEvent);
-//     document.addEventListener('collection.node.insert.before', dumpEvent);
-//     document.addEventListener('collection.node.insert.after', dumpEvent);
-//
-//     // document.addEventListener('collection.node.delete', dumpEvent);
-//     document.addEventListener('collection.node.delete.before', dumpEvent);
-//     document.addEventListener('collection.node.delete.after', dumpEvent);
-//
-//     // document.addEventListener('collection.node.up', dumpEvent);
-//     document.addEventListener('collection.node.up.before', dumpEvent);
-//     document.addEventListener('collection.node.up.after', dumpEvent);
-//
-//     // document.addEventListener('collection.node.down', dumpEvent);
-//     document.addEventListener('collection.node.down.before', dumpEvent);
-//     document.addEventListener('collection.node.down.after', dumpEvent);
-// });
+(typeof collectionFormTypeDebug !== 'undefined') && window.addEventListener('load', (event) => {
+    function dumpEvent(event) {
+        console.log('*************************************** '+event.type+' ***************************************');
+        console.log(event);
+        // try { console.log('originEvent: '+ event.originEvent()); } catch {}
+        try { console.log(event.collection()); } catch {}
+        try { console.log('position: '+ event.position()); } catch {}
+        try { console.log(event.node()); } catch {}
+        // try { console.log('prototypeName: '+ event.prototypeName()); } catch {}
+        // try { console.log('prototype: '+ event.prototype()); } catch {}
+    }
+
+    // document.addEventListener('collection.node.add', dumpEvent);
+    document.addEventListener('collection.node.add.before', dumpEvent);
+    document.addEventListener('collection.node.add.after', dumpEvent);
+
+    // document.addEventListener('collection.node.insert', dumpEvent);
+    document.addEventListener('collection.node.insert.before', dumpEvent);
+    document.addEventListener('collection.node.insert.after', dumpEvent);
+
+    // document.addEventListener('collection.node.delete', dumpEvent);
+    document.addEventListener('collection.node.delete.before', dumpEvent);
+    document.addEventListener('collection.node.delete.after', dumpEvent);
+
+    // document.addEventListener('collection.node.up', dumpEvent);
+    document.addEventListener('collection.node.up.before', dumpEvent);
+    document.addEventListener('collection.node.up.after', dumpEvent);
+
+    // document.addEventListener('collection.node.down', dumpEvent);
+    document.addEventListener('collection.node.down.before', dumpEvent);
+    document.addEventListener('collection.node.down.after', dumpEvent);
+
+    // document.addEventListener('collection.node.copy', dumpEvent);
+    document.addEventListener('collection.node.copy.before', dumpEvent);
+    document.addEventListener('collection.node.copy.after', dumpEvent);
+    document.addEventListener('collection.node.copy.prepare', dumpEvent);
+
+    // document.addEventListener('collection.node.paste', dumpEvent);
+    document.addEventListener('collection.node.paste.before', dumpEvent);
+    document.addEventListener('collection.node.paste.after', dumpEvent);
+    document.addEventListener('collection.node.paste.validate', dumpEvent);
+});
