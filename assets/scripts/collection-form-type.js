@@ -696,7 +696,7 @@ function canPasteToCollection(collection) {
     return navigator.clipboard
         .readText()
         .then((clipText) => {
-            const clipboardEvent = new ClipboardEvent('collection.node.copy.validate', clipText);
+            const clipboardEvent = new ClipboardEvent('collection.node.paste.validate', clipText);
             collection.dispatchEvent(clipboardEvent);
             return !!clipboardEvent.toArray();
         }).catch(() => {
