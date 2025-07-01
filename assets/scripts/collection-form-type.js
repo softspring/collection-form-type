@@ -139,9 +139,22 @@ class CollectionEvent extends Event {
 }
 
 class ClipboardEvent extends Event {
-    constructor(type, data) {
+    constructor(type, data, pasteDestination = null) {
         super(type, {bubbles: true, cancelable: true});
         this._data = data;
+        this._pasteDestination = pasteDestination || null; // optional, where to paste the data
+    }
+
+    pasteDestination(pasteDestination) {
+        if (pasteDestination !== undefined) {
+            this._pasteDestination = pasteDestination;
+        }
+
+        if (this._pasteDestination) {
+            return this._pasteDestination;
+        } else {
+            throw new Error('ClipboardEvent paste destination is not set');
+        }
     }
 
     data(data) {
@@ -492,7 +505,7 @@ async function onCollectionNodePaste(event) {
     await navigator.clipboard
         .readText()
         .then((clipText) => {
-            const clipboardEvent = new ClipboardEvent('collection.node.paste.validate', clipText);
+            const clipboardEvent = new ClipboardEvent('collection.node.paste.validate', clipText, beforeEvent.collection());
             beforeEvent.target.dispatchEvent(clipboardEvent);
 
             if (!clipboardEvent.toArray()) {
