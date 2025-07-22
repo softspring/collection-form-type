@@ -526,7 +526,7 @@ async function onCollectionNodePaste(event) {
             beforeEvent.prototypeName('___COPY___'); // set prototypeName to a special value to identify it later
 
             let newNode = null;
-            if (!beforeEvent.position() && !beforeEvent.node()) {
+            if (beforeEvent.position() === null && !beforeEvent.node()) {
                 newNode = addCollectionNode(beforeEvent.collection(), beforeEvent.prototypeName(), beforeEvent.prototype());
             } else {
                 // do add collection node with beforeEvent returned data
