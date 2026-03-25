@@ -1,10 +1,33 @@
-# Collection form type
+# Collection Form Type
 
 ![Latest Stable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=stable&style=flat-square)
 ![Latest Unstable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=unstable&style=flat-square&include_prereleases)
 ![License](https://img.shields.io/packagist/l/softspring/collection-form-type?style=flat-square)
+![PHP Version](https://img.shields.io/packagist/dependency-v/softspring/collection-form-type/php?style=flat-square)
 ![Downloads](https://img.shields.io/packagist/dt/softspring/collection-form-type?style=flat-square)
 [![CI](https://img.shields.io/github/actions/workflow/status/softspring/collection-form-type/ci.yml?branch=6.0&style=flat-square&label=CI)](https://github.com/softspring/collection-form-type/actions/workflows/ci.yml)
+
+Collection form type for Symfony
+
+## Armonic
+
+This package is part of [Armonic](https://softspring.es/en/armonic).
+
+## Documentation
+
+[Armonic Documentation](https://armonic.softspring.es/latest/components/collection-form-type)
+
+## Contributing
+
+Use the standard package commands before sending changes:
+
+```bash
+composer fix
+composer test
+composer test-bc
+```
+
+[Report issues](https://github.com/softspring/collection-form-type/issues) and [send Pull Requests](https://github.com/softspring/collection-form-type/pulls)
 
 ## License
 
