@@ -1,13 +1,12 @@
 # Collection Form Type
 
-![Latest Stable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=stable&style=flat-square)
-![Latest Unstable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=unstable&style=flat-square&include_prereleases)
-![License](https://img.shields.io/packagist/l/softspring/collection-form-type?style=flat-square)
-![PHP Version](https://img.shields.io/packagist/dependency-v/softspring/collection-form-type/php?style=flat-square)
-![Downloads](https://img.shields.io/packagist/dt/softspring/collection-form-type?style=flat-square)
+[![Latest Stable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=stable&style=flat-square)](https://github.com/softspring/collection-form-type/releases)
+[![Latest Unstable](https://img.shields.io/packagist/v/softspring/collection-form-type?label=unstable&style=flat-square&include_prereleases)](https://github.com/softspring/collection-form-type/releases)
+[![License](https://img.shields.io/packagist/l/softspring/collection-form-type?style=flat-square)](https://github.com/softspring/collection-form-type/blob/6.0/LICENSE)
+[![Downloads](https://img.shields.io/packagist/dt/softspring/collection-form-type?style=flat-square)](https://packagist.org/packages/softspring/collection-form-type)
 [![CI](https://img.shields.io/github/actions/workflow/status/softspring/collection-form-type/ci.yml?branch=6.0&style=flat-square&label=CI)](https://github.com/softspring/collection-form-type/actions/workflows/ci.yml)
 
-Collection form type for Symfony
+This package provides JavaScript helpers for dynamic collection form UIs in Symfony applications.
 
 ## Armonic
 
@@ -19,15 +18,13 @@ This package is part of [Armonic](https://softspring.es/en/armonic).
 
 ## Contributing
 
-Use the standard package commands before sending changes:
-
-```bash
-composer fix
-composer test
-composer test-bc
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 [Report issues](https://github.com/softspring/collection-form-type/issues) and [send Pull Requests](https://github.com/softspring/collection-form-type/pulls)
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
 
 ## License
 

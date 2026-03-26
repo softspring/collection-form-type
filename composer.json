@@ -1,6 +1,6 @@
 {
     "name": "softspring/collection-form-type",
-    "description": "Collection form type for Symfony",
+    "description": "JavaScript helpers for dynamic collection form interactions in Symfony applications",
     "type": "library",
     "license": "AGPL-3.0-or-later",
     "minimum-stability": "dev",
@@ -12,23 +12,21 @@
         }
     },
     "require-dev": {
-        "ergebnis/composer-normalize": "^2.50"
+        "ergebnis/composer-normalize": "^2.50",
+        "symfony/console": "^6.4 || ^7.4 || ^8.0",
+        "symfony/yaml": "^6.4 || ^7.4 || ^8.0"
     },
     "scripts": {
         "fix": [
-            "vendor/bin/rector process src tests",
-            "vendor/bin/php-cs-fixer fix",
             "composer normalize"
+        ],
+        "build-assets": [
+            "npm --prefix assets ci",
+            "npm --prefix assets run build"
         ],
         "run-tests": [
             "composer validate --strict --no-check-lock --ansi",
-            "XDEBUG_MODE=coverage vendor/bin/phpunit",
-            "vendor/bin/rector process src tests --dry-run",
-            "vendor/bin/phpstan analyse src tests --level 5",
-            "vendor/bin/php-cs-fixer fix --dry-run --diff",
-            "vendor/bin/yaml-lint .github/ -vvv --parse-tags",
-            "vendor/bin/yaml-lint config/ -vvv --parse-tags",
-            "vendor/bin/yaml-lint translations/ -vvv --parse-tags"
+            "vendor/bin/yaml-lint .github/ -vvv --parse-tags"
         ],
         "test": [
             "composer update --no-scripts --ansi",

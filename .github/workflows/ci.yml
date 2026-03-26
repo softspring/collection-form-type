@@ -9,18 +9,48 @@ on:
 permissions:
     contents: read
 
-env:
-    XDEBUG_MODE: coverage
-
 jobs:
     build:
         runs-on: ubuntu-latest
-        #        permissions:
-        #            contents: write
-        strategy:
-            matrix:
-                php-versions: [ '8.4' ]
-                composer-prefer: [ '', '--prefer-lowest' ]
 
         steps:
             -   uses: actions/checkout@v6
+
+            -   name: Install PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.4'
+
+            -   name: Validate composer.json
+                run: composer validate --strict --no-check-lock
+
+            -   name: Cache Composer packages
+                id: composer-cache
+                uses: actions/cache@v5
+                with:
+                    path: vendor
+                    key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: |
+                        ${{ runner.os }}-php-
+
+            -   name: Install Composer dependencies
+                run: composer update --prefer-dist --no-interaction --no-progress
+
+            -   name: Lint YAML in .github
+                run: ./vendor/bin/yaml-lint .github/ -vvv --parse-tags
+
+            -   name: Setup Node.js
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '20'
+
+            -   name: Install npm dependencies
+                working-directory: assets
+                run: npm ci
+
+            -   name: Build assets
+                working-directory: assets
+                run: npm run build
+
+            -   name: Check committed build artifacts
+                run: git diff --exit-code -- assets/dist
