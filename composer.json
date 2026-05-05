@@ -11,6 +11,11 @@
             "ergebnis/composer-normalize": true
         }
     },
+    "autoload": {
+        "psr-4": {
+            "Softspring\\Component\\CollectionFormType\\": "src/"
+        }
+    },
     "require-dev": {
         "ergebnis/composer-normalize": "^2.50",
         "symfony/console": "^6.4 || ^7.4 || ^8.0",
