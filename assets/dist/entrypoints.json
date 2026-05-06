@@ -1,9 +1,0 @@
-{
-  "entrypoints": {
-    "collection-form-type.min": {
-      "js": [
-        "/build/collection-form-type.min.js"
-      ]
-    }
-  }
-}

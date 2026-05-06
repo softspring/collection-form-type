@@ -10,47 +10,89 @@ permissions:
     contents: read
 
 jobs:
-    build:
+    backend:
         runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                php-versions: [ '8.4' ]
 
         steps:
             -   uses: actions/checkout@v6
 
-            -   name: Install PHP
+            -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: '8.4'
+                    php-version: ${{ matrix.php-versions }}
+                    coverage: none
 
             -   name: Validate composer.json
-                run: composer validate --strict --no-check-lock
+                run: composer validate --strict
 
-            -   name: Cache Composer packages
-                id: composer-cache
-                uses: actions/cache@v5
-                with:
-                    path: vendor
-                    key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-                    restore-keys: |
-                        ${{ runner.os }}-php-
+            -   name: Install PHP dependencies
+                run: composer update --no-scripts --ansi
 
-            -   name: Install Composer dependencies
-                run: composer update --prefer-dist --no-interaction --no-progress
+            -   name: Run tests
+                run: composer run run-tests
 
-            -   name: Lint YAML in .github
-                run: ./vendor/bin/yaml-lint .github/ -vvv --parse-tags
+    frontend:
+        needs: backend
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-versions: [ '20' ]
+
+        steps:
+            -   uses: actions/checkout@v6
 
             -   name: Setup Node.js
                 uses: actions/setup-node@v4
                 with:
-                    node-version: '20'
+                    node-version: ${{ matrix.node-versions }}
 
-            -   name: Install npm dependencies
-                working-directory: assets
-                run: npm ci
+            -   name: Check Node.js Version
+                run: node -v
 
             -   name: Build assets
-                working-directory: assets
-                run: npm run build
+                run: node assets/build-dist.mjs
 
-            -   name: Check committed build artifacts
-                run: git diff --exit-code -- assets/dist
+    build-dist:
+        needs: frontend
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        env:
+            CI_COMMIT_MESSAGE: Continuous Integration Assets Build Artifacts
+            CI_COMMIT_AUTHOR: Continuous Integration
+            BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+        steps:
+            -   uses: actions/checkout@v6
+                with:
+                    ref: ${{ env.BRANCH_NAME }}
+
+            -   name: Build dist
+                run: node assets/build-dist.mjs
+
+            -   name: Check dist is clean on pull requests
+                if: github.event_name == 'pull_request'
+                run: |
+                    if [ -n "$(git status --porcelain -- assets/dist)" ]; then
+                        git status --short -- assets/dist
+                        exit 1
+                    fi
+
+            -   name: Commit dist changes
+                if: github.event_name == 'push'
+                run: |
+                    if [ -z "$(git status --porcelain -- assets/dist)" ]; then
+                        exit 0
+                    fi
+
+                    git config user.name "${{ env.CI_COMMIT_AUTHOR }}"
+                    git config user.email "username@users.noreply.github.com"
+                    git add assets/dist
+                    git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+                    git push origin HEAD:${{ env.BRANCH_NAME }}

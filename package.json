@@ -1,0 +1,12 @@
+{
+    "name": "@softspring/collection-form-type",
+    "license": "MIT",
+    "version": "6.0.0-dev",
+    "symfony": {
+        "importmap": {
+            "@softspring/collection-form-type/collection-form-type.js": {
+                "path": "assets/dist/collection-form-type.js"
+            }
+        }
+    }
+}
