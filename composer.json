@@ -1,33 +1,38 @@
 {
     "name": "softspring/collection-form-type",
     "description": "JavaScript helpers for dynamic collection form interactions in Symfony applications",
-    "type": "library",
     "license": "AGPL-3.0-or-later",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "ergebnis/composer-normalize": true
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "Softspring\\Component\\CollectionFormType\\": "src/"
-        }
-    },
+    "type": "library",
     "require-dev": {
         "ergebnis/composer-normalize": "^2.50",
         "symfony/console": "^6.4 || ^7.4 || ^8.0",
         "symfony/yaml": "^6.4 || ^7.4 || ^8.0"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Softspring\\Component\\CollectionFormType\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-6.0": "6.0.x-dev"
+        }
+    },
     "scripts": {
-        "fix": [
-            "composer normalize"
-        ],
         "build-assets": [
             "npm --prefix assets ci",
             "npm --prefix assets run build"
+        ],
+        "fix": [
+            "composer normalize"
         ],
         "run-tests": [
             "composer validate --strict --no-check-lock --ansi",
@@ -41,10 +46,5 @@
             "composer update --no-scripts --ansi --prefer-lowest --prefer-stable",
             "@run-tests"
         ]
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-6.0": "6.0.x-dev"
-        }
     }
 }
