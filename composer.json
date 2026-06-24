@@ -5,7 +5,12 @@
     "type": "library",
     "require-dev": {
         "ergebnis/composer-normalize": "^2.50",
+        "phpunit/phpunit": "^12.5",
+        "symfony/asset-mapper": "^6.4 || ^7.4 || ^8.0",
+        "symfony/config": "^6.4 || ^7.4 || ^8.0",
         "symfony/console": "^6.4 || ^7.4 || ^8.0",
+        "symfony/dependency-injection": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-kernel": "^6.4 || ^7.4 || ^8.0",
         "symfony/yaml": "^6.4 || ^7.4 || ^8.0"
     },
     "minimum-stability": "dev",
@@ -13,6 +18,11 @@
     "autoload": {
         "psr-4": {
             "Softspring\\Component\\CollectionFormType\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Softspring\\Component\\CollectionFormType\\Tests\\": "tests/"
         }
     },
     "config": {
@@ -36,6 +46,7 @@
         ],
         "run-tests": [
             "composer validate --strict --no-check-lock --ansi",
+            "XDEBUG_MODE=coverage vendor/bin/phpunit",
             "vendor/bin/yaml-lint .github/ -vvv --parse-tags"
         ],
         "test": [

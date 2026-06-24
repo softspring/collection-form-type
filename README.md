@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/packagist/l/softspring/collection-form-type?style=flat-square)](https://github.com/softspring/collection-form-type/blob/6.0/LICENSE)
 [![Downloads](https://img.shields.io/packagist/dt/softspring/collection-form-type?style=flat-square)](https://packagist.org/packages/softspring/collection-form-type)
 [![CI](https://img.shields.io/github/actions/workflow/status/softspring/collection-form-type/ci.yml?branch=6.0&style=flat-square&label=CI)](https://github.com/softspring/collection-form-type/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/softspring/collection-form-type?branch=6.0&style=flat-square)](https://app.codecov.io/gh/softspring/collection-form-type/tree/6.0)
 
 This package provides JavaScript helpers for dynamic collection form UIs in Symfony applications.
 
