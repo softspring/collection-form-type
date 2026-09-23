@@ -65,7 +65,7 @@ jobs:
                 run: node -v
 
             -   name: Build assets
-                run: node assets/build-dist.mjs
+                run: npm run build
 
     build-dist:
         needs: frontend
@@ -84,7 +84,7 @@ jobs:
                     ref: ${{ env.BRANCH_NAME }}
 
             -   name: Build dist
-                run: node assets/build-dist.mjs
+                run: npm run build
 
             -   name: Check dist is clean on pull requests
                 if: github.event_name == 'pull_request'

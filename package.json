@@ -2,6 +2,9 @@
     "name": "@softspring/collection-form-type",
     "license": "MIT",
     "version": "6.0.0-dev",
+    "scripts": {
+        "build": "node assets/build-dist.mjs"
+    },
     "symfony": {
         "importmap": {
             "@softspring/collection-form-type/collection-form-type.js": {
