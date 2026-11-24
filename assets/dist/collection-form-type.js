@@ -248,7 +248,7 @@ function onCollectionNodeChangePropagateValue(event) {
     }
 
     if (event.target.matches('[data-collection=node] input[type=checkbox]')) {
-        event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
+        event.target.toggleAttribute('checked', event.target.checked);
         return;
     }
 
