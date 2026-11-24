@@ -26,7 +26,7 @@ This file defines the expected behavior and functional scope of the package. It 
 - Keep collection indexes, ids, and full names synchronized when nodes move or duplicate.
 - Update action button visibility after collection changes.
 - Scroll newly added or inserted nodes into view.
-- Propagate current input values into HTML before moving nodes.
+- Propagate current input values into HTML before moving nodes, including the checked state of checkboxes and of every radio in the changed group.
 - Support clipboard-based copy and paste of collection nodes.
 
 ## Event Expectations
