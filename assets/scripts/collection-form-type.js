@@ -243,7 +243,12 @@ function onCollectionNodeChangePropagateValue(event) {
     }
 
     if (event.target.matches('[data-collection=node] input[type=radio]')) {
-        event.target.setAttribute('checked', event.target.checked ? 'checked' : '');
+        // the previously checked radio of the group does not receive a change event, so sync the whole group
+        (event.target.form || document).querySelectorAll('input[type=radio]').forEach((radio) => {
+            if (radio.name === event.target.name) {
+                radio.toggleAttribute('checked', radio.checked);
+            }
+        });
         return;
     }
 
